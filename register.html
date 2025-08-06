@@ -1,0 +1,88 @@
+    <script>
+        API_URL = "http://localhost:5001";
+        async function xxx() {            
+            // Get form elements
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Submitting...';
+            loadingSpinner.classList.remove('d-none');
+
+            const queryString = window.location.search;
+
+            // 2. Create a new URLSearchParams object
+            const params = new URLSearchParams(queryString);
+
+            // 3. Retrieve a specific parameter by its name
+            // const name = params.get('name'); // Returns "John"
+            
+            // Get form data first
+            const formData = {
+                userid: null,  // Initialize as null, will be set below
+                name: document.getElementById('fullName').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phoneNumber').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                message: document.getElementById('message').value.trim()
+            };
+            
+            // Set userid_local based on available sources
+            var userid_local = null;
+            {% if userid %}
+                userid_local = "{{ userid }}";
+            {% endif %}
+            
+            // Check if userid is in URL parameters
+            if (params.get('userid')) {
+                userid_local = params.get('userid');
+            }
+            
+            // Update formData with the userid
+            formData.userid = userid_local;
+            
+            console.log(userid_local);
+            debugger;
+            
+            try {
+                // Submit form data to API
+                var url = `${API_URL}/api/savecontact`;
+                console.log(url);
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                console.log(result)
+                debugger;
+                if (response.ok && result.success) {
+                    // Redirect to success page with contact ID
+                    window.location.href = `/success?contact_id=${userid_local}`;
+                } else {
+                    // Show error message
+                    alert('Error: ' + (result.error || 'Failed to submit form'));
+                    
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitText.textContent = 'Register';
+                    loadingSpinner.classList.add('d-none');
+                }
+            } catch (error) {
+                // Handle network or other errors
+                alert('Error: Failed to submit form. Please try again.');
+                console.error('Form submission error:', error);
+                
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Register';
+                loadingSpinner.classList.add('d-none');
+            }
+        }
+      
+    </script>
